@@ -9,6 +9,7 @@ export default new Vuex.Store({
     equipos: [
       {
         id: 1,
+        tipo: "Humano",
         img: "https://via.placeholder.com/150",
         titulo: "Equipo 1",
         detalle: "Detalle del equipo 1.",
@@ -16,6 +17,7 @@ export default new Vuex.Store({
       },
       {
         id: 2,
+        tipo: "Veterinario",
         img: "https://via.placeholder.com/150",
         titulo: "Equipo 2",
         detalle: "Detalle del equipo 2.",
@@ -28,7 +30,22 @@ export default new Vuex.Store({
       state.isAuthenticated = value;
     },
     addEquipo(state, equipo) {
-      state.equipos.push(equipo);
+      // Asigna un nuevo ID si no existe (para nuevos equipos)
+      if (!equipo.id) {
+        const newId =
+          state.equipos.length > 0
+            ? Math.max(...state.equipos.map((e) => e.id)) + 1
+            : 1;
+        equipo.id = newId;
+      }
+      const existingIndex = state.equipos.findIndex((e) => e.id === equipo.id);
+      if (existingIndex !== -1) {
+        // Reemplazar equipo existente
+        Vue.set(state.equipos, existingIndex, equipo);
+      } else {
+        // Agregar nuevo equipo
+        state.equipos.push(equipo);
+      }
     },
     removeEquipo(state, equipoId) {
       state.equipos = state.equipos.filter((e) => e.id !== equipoId);
@@ -45,6 +62,9 @@ export default new Vuex.Store({
     },
     logout({ commit }) {
       commit("setAuthenticated", false);
+    },
+    saveEquipo({ commit }, equipo) {
+      commit("addEquipo", equipo);
     },
   },
 });

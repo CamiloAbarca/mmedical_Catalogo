@@ -1,5 +1,10 @@
 <template>
     <b-form @submit.prevent="submitForm" class="p-4 form-elegant">
+        <b-form-group label="Tipo de Equipo:" label-for="input-tipo" class="mb-4">
+            <b-form-select id="input-tipo" v-model="form.tipo" :options="tipos" required
+                class="form-control-elegant"></b-form-select>
+        </b-form-group>
+
         <b-form-group label="Título del Equipo:" label-for="input-titulo" class="mb-4">
             <b-form-input id="input-titulo" v-model="form.titulo" placeholder="Ingrese el título" required
                 class="form-control-elegant"></b-form-input>
@@ -11,24 +16,36 @@
         </b-form-group>
 
         <b-form-group label="Subir Imagen:" label-for="file-img" class="mb-4">
-            <b-form-file id="file-img" v-model="form.imgFile" placeholder="Seleccione una imagen o arrástrela aquí..."
-                drop-placeholder="Arrastre la imagen aquí..." accept="image/*" @change="onImageFileChange"
-                class="form-control-elegant"></b-form-file>
+            <b-form-file id="file-img" v-model="form.imgFile" drop-placeholder="Arrastre la imagen aquí..."
+                accept="image/*" @change="onImageFileChange" class="form-control-elegant" no-change-text="">
+                <template #default="{ files }">
+                    <span v-if="files && files.length > 0">
+                        {{ files[0].name }}
+                    </span>
+                    <span v-else>Seleccione una imagen o arrástrela aquí...</span>
+                </template>
+            </b-form-file>
             <b-form-text class="mt-3 text-center" v-if="imgPreviewUrl">
                 <b-img :src="imgPreviewUrl" thumbnail fluid alt="Previsualización de imagen"
                     class="img-preview"></b-img>
             </b-form-text>
             <b-form-text class="mt-2 text-muted" v-else-if="equipoToEdit && equipoToEdit.imgFileName">
-                Imagen actual: <strong>{{ equipoToEdit.imgFileName }}</strong>
+                Imagen actual: <strong>{{ equipoTo - edit.imgFileName }}</strong>
             </b-form-text>
         </b-form-group>
 
         <b-form-group label="Subir PDF:" label-for="file-pdf" class="mb-4">
-            <b-form-file id="file-pdf" v-model="form.pdfFile"
-                placeholder="Seleccione un archivo PDF o arrástrelo aquí..." drop-placeholder="Arrastre el PDF aquí..."
-                accept="application/pdf" @change="onPdfFileChange" class="form-control-elegant"></b-form-file>
+            <b-form-file id="file-pdf" v-model="form.pdfFile" drop-placeholder="Arrastre el PDF aquí..."
+                accept="application/pdf" @change="onPdfFileChange" class="form-control-elegant" no-change-text="">
+                <template #default="{ files }">
+                    <span v-if="files && files.length > 0">
+                        {{ files[0].name }}
+                    </span>
+                    <span v-else>Seleccione un archivo PDF o arrástrelo aquí...</span>
+                </template>
+            </b-form-file>
             <b-form-text class="mt-2 text-muted" v-if="equipoToEdit && equipoToEdit.pdfFileName && !form.pdfFile">
-                PDF actual: <strong>{{ equipoToEdit.pdfFileName }}</strong>
+                PDF actual: <strong>{{ equipoTo - edit.pdfFileName }}</strong>
             </b-form-text>
         </b-form-group>
 
@@ -58,11 +75,16 @@ export default {
         return {
             form: {
                 id: null,
+                tipo: 'Humano',
                 titulo: '',
                 detalle: '',
                 imgFile: null,
                 pdfFile: null
             },
+            tipos: [
+                { value: 'Humano', text: 'Humano' },
+                { value: 'Veterinario', text: 'Veterinario' }
+            ],
             imgPreviewUrl: null
         };
     },
@@ -71,6 +93,7 @@ export default {
             handler(newVal) {
                 if (newVal) {
                     this.form.id = newVal.id;
+                    this.form.tipo = newVal.tipo;
                     this.form.titulo = newVal.titulo;
                     this.form.detalle = newVal.detalle;
                     this.form.imgFile = null;
@@ -90,6 +113,7 @@ export default {
         resetForm() {
             this.form = {
                 id: null,
+                tipo: 'Humano',
                 titulo: '',
                 detalle: '',
                 imgFile: null,

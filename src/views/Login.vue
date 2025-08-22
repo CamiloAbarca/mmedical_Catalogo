@@ -1,8 +1,8 @@
 <template>
     <b-container class="mt-5">
         <b-row align-h="center">
-            <b-col cols="12" md="6">
-                <b-card title="Iniciar Sesión" class="shadow-sm">
+            <b-col cols="12" md="4">
+                <b-card title="Iniciar Sesión" class="shadow-lg login-card">
                     <b-form @submit.prevent="handleLogin">
                         <b-form-group label="Usuario:" label-for="username-input">
                             <b-form-input id="username-input" v-model="username" required></b-form-input>
@@ -42,3 +42,22 @@ export default {
     }
 };
 </script>
+
+<style scoped>
+.login-card {
+    border: none;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    background: #fefefe;
+}
+
+.login-card .card-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.shadow-lg {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+</style>

@@ -2,17 +2,15 @@
   <div id="app">
     <b-navbar toggleable="lg" type="dark" variant="light" class="shadow-sm border-bottom">
       <b-container>
-        <b-navbar-brand href="#" class="text-dark font-weight-bold">Gestión de Equipos</b-navbar-brand>
+        <b-navbar-brand href="#" class="text-dark font-weight-bold">Catálogo de equipos</b-navbar-brand>
 
         <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
         <b-collapse id="nav-collapse" is-nav>
-          <b-navbar-nav>
-          </b-navbar-nav>
-
           <b-navbar-nav class="ml-auto">
-            <b-nav-item v-if="$store.state.isAuthenticated" @click="logout" class="text-secondary">Cerrar
-              Sesión</b-nav-item>
+            <b-nav-item v-if="$store.state.isAuthenticated" @click="logout">
+              <b-button size="sm" variant="danger">Cerrar Sesión</b-button>
+            </b-nav-item>
           </b-navbar-nav>
         </b-collapse>
       </b-container>

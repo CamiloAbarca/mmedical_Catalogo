@@ -2,7 +2,6 @@
     <div>
         <b-table striped hover :items="equipos" :fields="fields" primary-key="id" class="text-center elegant-table"
             responsive="sm">
-            <!-- Slot personalizado para la columna de imagen -->
             <template #cell(img)="data">
                 <b-img v-if="data.item.imgDataUrl" :src="data.item.imgDataUrl" alt="Imagen del equipo" width="60"
                     height="60" rounded thumbnail class="equipo-img m-1"></b-img>
@@ -14,7 +13,6 @@
                 </div>
             </template>
 
-            <!-- Slot personalizado para la columna de PDF -->
             <template #cell(pdf)="data">
                 <span v-if="data.item.pdfFileName" class="d-block">
                     <b-icon-file-earmark-pdf-fill variant="danger" font-scale="1.2"></b-icon-file-earmark-pdf-fill>
@@ -23,7 +21,6 @@
                 <span v-else class="text-muted">N/A</span>
             </template>
 
-            <!-- Slot personalizado para la columna de acciones -->
             <template #cell(acciones)="data">
                 <b-button size="sm" variant="outline-info" class="mr-2 action-btn"
                     @click="$emit('edit-equipo', data.item)">
@@ -35,7 +32,6 @@
                 </b-button>
             </template>
 
-            <!-- Slot para cuando no hay items -->
             <template #empty>
                 <p class="text-center text-muted py-3">No hay equipos registrados aún.</p>
             </template>
@@ -46,6 +42,13 @@
 <script>
 export default {
     name: 'EquipoList',
+    props: {
+        equipos: {
+            type: Array,
+            required: true,
+            default: () => []
+        }
+    },
     data() {
         return {
             fields: [
@@ -56,15 +59,6 @@ export default {
                 { key: 'acciones', label: 'Acciones', class: 'text-center' }
             ]
         };
-    },
-    computed: {
-        /**
-         * Obtiene la lista de equipos del estado de Vuex.
-         * @returns {Array} La lista de equipos.
-         */
-        equipos() {
-            return this.$store.state.equipos;
-        }
     }
 };
 </script>

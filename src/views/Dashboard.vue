@@ -1,9 +1,8 @@
 <template>
     <b-container class="mt-5">
-        <!-- Tarjeta principal con sombra y bordes redondeados -->
         <b-card class="shadow-sm p-4">
             <b-card-title class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="h4 font-weight-bold text-dark m-0">Gestión de Equipos</h2>
+                <h2 class="h4 font-weight-bold text-dark m-0">Catálogo de Equipos</h2>
                 <b-button variant="primary" class="add-equipo-btn" @click="openAddModal">
                     <b-icon-plus-circle-fill></b-icon-plus-circle-fill> Agregar Equipo
                 </b-button>
@@ -11,14 +10,23 @@
 
             <hr class="my-4">
 
-            <!-- Componente para listar los equipos -->
-            <EquipoList @edit-equipo="editEquipo" @remove-equipo="removeEquipo" />
+            <b-input-group class="mb-4">
+                <b-form-input v-model="searchTerm" placeholder="Buscar equipo por título o detalle..."
+                    debounce="500"></b-form-input>
+                <b-input-group-append>
+                    <b-button @click="searchTerm = ''" :disabled="!searchTerm">Limpiar</b-button>
+                </b-input-group-append>
+            </b-input-group>
 
-            <!-- Modal para agregar/editar equipo con estilo minimalista -->
+            <h3 class="h5 text-left text-muted font-weight-bold my-4">Equipos Humanos</h3>
+            <EquipoList :equipos="filteredHumanos" @edit-equipo="editEquipo" @remove-equipo="removeEquipo" />
+
+            <h3 class="h5 text-left text-muted font-weight-bold my-4">Equipos Veterinarios</h3>
+            <EquipoList :equipos="filteredVeterinarios" @edit-equipo="editEquipo" @remove-equipo="removeEquipo" />
+
             <b-modal v-model="showAddModal" :title="editingEquipo ? 'Editar Equipo' : 'Agregar Nuevo Equipo'"
                 hide-footer size="lg" centered header-class="border-bottom-0 pb-0" body-class="pt-0"
-                footer-class="border-top-0 pt-0">
-                <!-- Componente de formulario de equipo dentro del modal -->
+                footer-class="border-top-0 pt-0" hide-header-close>
                 <EquipoForm :equipo-to-edit="editingEquipo" @equipo-saved="handleEquipoSaved"
                     @cancel="showAddModal = false" />
             </b-modal>
@@ -40,7 +48,29 @@ export default {
         return {
             showAddModal: false,
             editingEquipo: null,
+            searchTerm: '',
         };
+    },
+    computed: {
+        equipos() {
+            return this.$store.state.equipos;
+        },
+        filteredEquipos() {
+            if (!this.searchTerm) {
+                return this.equipos;
+            }
+            const term = this.searchTerm.toLowerCase();
+            return this.equipos.filter(equipo =>
+                (equipo.titulo && equipo.titulo.toLowerCase().includes(term)) ||
+                (equipo.detalle && equipo.detalle.toLowerCase().includes(term))
+            );
+        },
+        filteredHumanos() {
+            return this.filteredEquipos.filter(equipo => equipo.tipo === 'Humano');
+        },
+        filteredVeterinarios() {
+            return this.filteredEquipos.filter(equipo => equipo.tipo === 'Veterinario');
+        }
     },
     methods: {
         /**
