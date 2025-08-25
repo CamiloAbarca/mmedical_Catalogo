@@ -27,8 +27,8 @@
             <b-modal v-model="showAddModal" :title="editingEquipo ? 'Editar Equipo' : 'Agregar Nuevo Equipo'"
                 hide-footer size="lg" centered header-class="border-bottom-0 pb-0" body-class="pt-0"
                 footer-class="border-top-0 pt-0" hide-header-close>
-                <EquipoForm :equipo-to-edit="editingEquipo" @equipo-saved="handleEquipoSaved"
-                    @cancel="showAddModal = false" />
+                <EquipoForm v-if="showAddModal" :key="formKey" :equipo-to-edit="editingEquipo"
+                    @equipo-saved="handleEquipoSaved" @cancel="showAddModal = false" />
             </b-modal>
         </b-card>
     </b-container>
@@ -49,6 +49,7 @@ export default {
             showAddModal: false,
             editingEquipo: null,
             searchTerm: '',
+            formKey: 0,
         };
     },
     computed: {
@@ -78,6 +79,7 @@ export default {
          */
         openAddModal() {
             this.editingEquipo = null;
+            this.formKey += 1;
             this.showAddModal = true;
         },
         /**
@@ -86,6 +88,7 @@ export default {
          */
         editEquipo(equipo) {
             this.editingEquipo = { ...equipo };
+            this.formKey += 1;
             this.showAddModal = true;
         },
         /**
@@ -93,7 +96,6 @@ export default {
          * @param {number} equipoId - El ID del equipo a eliminar.
          */
         removeEquipo(equipoId) {
-            // Usar un modal de confirmación de BootstrapVue para mejor UX
             this.$bvModal.msgBoxConfirm('¿Estás seguro de que quieres eliminar este equipo?', {
                 title: 'Confirmar Eliminación',
                 size: 'sm',
@@ -122,11 +124,10 @@ export default {
         },
         /**
          * Se activa cuando un equipo ha sido guardado desde EquipoForm.
-         * Usa la acción `saveEquipo` de Vuex y cierra el modal.
-         * @param {Object} savedEquipo - El equipo que fue guardado.
+         * @param {FormData} formData - Los datos del equipo y archivos a guardar.
          */
-        handleEquipoSaved(savedEquipo) {
-            this.$store.dispatch('saveEquipo', savedEquipo);
+        handleEquipoSaved(formData) {
+            this.$store.dispatch('saveEquipo', formData);
             this.showAddModal = false;
             this.editingEquipo = null;
             this.$bvToast.toast('Equipo guardado correctamente.', {

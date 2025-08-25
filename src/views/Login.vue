@@ -1,45 +1,48 @@
 <template>
-    <b-container class="mt-5">
-        <b-row align-h="center">
-            <b-col cols="12" md="4">
-                <b-card title="Iniciar Sesión" class="shadow-lg login-card">
-                    <b-form @submit.prevent="handleLogin">
-                        <b-form-group label="Usuario:" label-for="username-input">
-                            <b-form-input id="username-input" v-model="username" required></b-form-input>
-                        </b-form-group>
-
-                        <b-form-group label="Contraseña:" label-for="password-input">
-                            <b-form-input id="password-input" type="password" v-model="password"
-                                required></b-form-input>
-                        </b-form-group>
-
-                        <b-button type="submit" variant="primary" block style="margin-top: 3%;">Acceder</b-button>
-                    </b-form>
-                </b-card>
-            </b-col>
-        </b-row>
-    </b-container>
+    <div class="login d-flex justify-content-center align-items-center vh-100">
+        <div class="card login-card shadow-lg">
+            <div class="card-body">
+                <h1 class="card-title text-center">Acceso</h1>
+                <form @submit.prevent="submit">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email:</label>
+                        <input type="email" id="email" class="form-control" v-model="form.email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password:</label>
+                        <input type="password" id="password" class="form-control" v-model="form.password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
+                    <div v-if="error" class="mt-3 text-danger text-center">{{ error }}</div>
+                </form>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script>
 export default {
-    name: 'LoginView',
+    name: "LoginView",
     data() {
         return {
-            username: '',
-            password: ''
+            form: {
+                email: '',
+                password: '',
+            },
+            error: null,
         };
     },
     methods: {
-        async handleLogin() {
-            const success = await this.$store.dispatch('login', { user: this.username, pass: this.password });
-            if (success) {
+        async submit() {
+            this.error = null;
+            try {
+                await this.$store.dispatch('login', this.form);
                 this.$router.push('/dashboard');
-            } else {
-                alert('Usuario o contraseña incorrectos');
+            } catch (e) {
+                this.error = e.message;
             }
-        }
-    }
+        },
+    },
 };
 </script>
 
@@ -59,5 +62,9 @@ export default {
 
 .shadow-lg {
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.vh-100 {
+    min-height: 100vh;
 }
 </style>

@@ -147,49 +147,26 @@ export default {
         },
         /**
          * Maneja el envío del formulario.
-         * Emite un evento 'equipo-saved' con los datos del equipo y los archivos.
+         * Emite un evento 'equipo-saved' con los datos y archivos.
          */
-        async submitForm() {
-            const savedEquipo = { ...this.form };
-
+        submitForm() {
+            const formData = new FormData();
+            if (this.form.id) {
+                formData.append('id', this.form.id);
+            }
+            formData.append('titulo', this.form.titulo);
+            formData.append('detalle', this.form.detalle);
+            formData.append('tipo', this.form.tipo);
             if (this.form.imgFile) {
-                savedEquipo.imgDataUrl = await this.fileToBase64(this.form.imgFile);
-                savedEquipo.imgFileName = this.form.imgFile.name;
-            } else if (this.equipoToEdit && this.equipoToEdit.imgDataUrl) {
-                savedEquipo.imgDataUrl = this.equipoToEdit.imgDataUrl;
-                savedEquipo.imgFileName = this.equipoToEdit.imgFileName;
-            } else {
-                savedEquipo.imgDataUrl = null;
-                savedEquipo.imgFileName = null;
+                formData.append('imgFile', this.form.imgFile);
             }
-
             if (this.form.pdfFile) {
-                savedEquipo.pdfFileName = this.form.pdfFile.name;
-            } else if (this.equipoToEdit && this.equipoToEdit.pdfFileName) {
-                savedEquipo.pdfFileName = this.equipoToEdit.pdfFileName;
-            } else {
-                savedEquipo.pdfFileName = null;
+                formData.append('pdfFile', this.form.pdfFile);
             }
 
-            delete savedEquipo.imgFile;
-            delete savedEquipo.pdfFile;
-
-            this.$emit('equipo-saved', savedEquipo);
+            this.$emit('equipo-saved', formData);
             this.resetForm();
         },
-        /**
-         * Convierte un objeto File a una cadena Base64.
-         * @param {File} file - El objeto File a convertir.
-         * @returns {Promise<string>} Una promesa que resuelve con la cadena Base64.
-         */
-        fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
     },
     beforeDestroy() {
         if (this.imgPreviewUrl) {
