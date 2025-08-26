@@ -15,19 +15,18 @@
                 max-rows="6" required class="form-control-elegant"></b-form-textarea>
         </b-form-group>
 
-        <b-form-group label="URL de la Imagen:" label-for="input-img" class="mb-4">
-            <b-form-input id="input-img" v-model="form.img" placeholder="Ingrese la URL de la imagen"
-                class="form-control-elegant"></b-form-input>
+        <b-form-group label="Imagen del Equipo:" label-for="input-img" class="mb-4">
+            <b-form-file id="input-img" v-model="imgFile" accept="image/*" class="form-control-elegant"></b-form-file>
             <b-form-text class="mt-2 text-muted" v-if="equipoToEdit && equipoToEdit.img">
-                URL actual: <strong>{{ equipoToEdit.img }}</strong>
+                Imagen actual: <strong>{{ equipoToEdit.img }}</strong>
             </b-form-text>
         </b-form-group>
 
-        <b-form-group label="URL del PDF:" label-for="input-pdf" class="mb-4">
-            <b-form-input id="input-pdf" v-model="form.pdf" placeholder="Ingrese la URL del PDF"
-                class="form-control-elegant"></b-form-input>
+        <b-form-group label="PDF del Equipo:" label-for="input-pdf" class="mb-4">
+            <b-form-file id="input-pdf" v-model="pdfFile" accept="application/pdf"
+                class="form-control-elegant"></b-form-file>
             <b-form-text class="mt-2 text-muted" v-if="equipoToEdit && equipoToEdit.pdf">
-                URL actual: <strong>{{ equipoToEdit.pdf }}</strong>
+                PDF actual: <strong>{{ equipoToEdit.pdf }}</strong>
             </b-form-text>
         </b-form-group>
 
@@ -52,11 +51,14 @@ export default {
     },
     data() {
         return {
-            form: { id: null, tipo: 'Humano', titulo: '', detalle: '', img: '', pdf: '' },
+            form: { id: null, tipo: '', titulo: '', detalle: '' },
             tipos: [
+                { value: '', text: 'Seleccione...' },
                 { value: 'Humano', text: 'Humano' },
                 { value: 'Veterinario', text: 'Veterinario' }
-            ]
+            ],
+            imgFile: null,
+            pdfFile: null
         };
     },
     watch: {
@@ -73,12 +75,53 @@ export default {
     },
     methods: {
         resetForm() {
-            this.form = { id: null, tipo: 'Humano', titulo: '', detalle: '', img: '', pdf: '' };
+            this.form = { id: null, tipo: '', titulo: '', detalle: '' };
+            this.imgFile = null;
+            this.pdfFile = null;
         },
-        submitForm() {
-            // Emitimos los datos completos con los nombres correctos
-            this.$emit('equipo-saved', { ...this.form });
-            this.resetForm();
+        async submitForm() {
+            if (!this.form.tipo) {
+                alert('Por favor seleccione un tipo de equipo.');
+                return;
+            }
+
+            const baseUrl = 'http://mmedical.cl/apiCatalogo/equipos';
+            const url = this.form.id ? `${baseUrl}/${this.form.id}` : baseUrl;
+            const method = this.form.id ? 'PUT' : 'POST';
+
+            // Comprobamos si hay archivos para determinar el tipo de envío
+            const hasFiles = this.imgFile || this.pdfFile;
+
+            try {
+                let response;
+                if (this.form.id && !hasFiles) { // Si es una edición SIN archivos, enviamos JSON
+                    response = await fetch(url, {
+                        method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.form)
+                    });
+                } else { // Si es una creación O una edición CON archivos, usamos FormData
+                    const formData = new FormData();
+                    formData.append('tipo', this.form.tipo);
+                    formData.append('titulo', this.form.titulo);
+                    formData.append('detalle', this.form.detalle);
+                    if (this.imgFile) formData.append('img', this.imgFile);
+                    if (this.pdfFile) formData.append('pdf', this.pdfFile);
+                    if (this.form.id) formData.append('id', this.form.id);
+
+                    response = await fetch(url, {
+                        method,
+                        body: formData
+                    });
+                }
+
+                if (!response.ok) throw new Error('Error al guardar el equipo');
+                const data = await response.json();
+                this.$emit('equipo-saved', data);
+                this.resetForm();
+            } catch (error) {
+                alert(error.message);
+            }
         }
     }
 };
