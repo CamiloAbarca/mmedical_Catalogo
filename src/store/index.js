@@ -115,7 +115,12 @@ export default new Vuex.Store({
           body: JSON.stringify(equipoData),
         });
 
-        if (!response.ok) throw new Error("Error al guardar el equipo");
+        if (!response.ok) {
+          // Si el servidor envía una respuesta de error, la imprimimos en la consola
+          const errorText = await response.text();
+          console.error("Error al guardar el equipo:", errorText);
+          throw new Error("Error al guardar el equipo");
+        }
 
         const data = await response.json();
 
@@ -125,7 +130,30 @@ export default new Vuex.Store({
           commit("updateEquipo", data);
         }
 
-        return data; // <- importante: devolvemos el equipo guardado
+        return data;
+      } catch (error) {
+        commit("setError", error.message);
+        throw error;
+      }
+    },
+
+    // **NUEVA ACCIÓN AÑADIDA**
+    async deleteEquipo({ commit }, id) {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          `https://mmedical.cl/apiCatalogo/equipos/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error("Error al eliminar el equipo");
+
+        commit("removeEquipo", id);
       } catch (error) {
         commit("setError", error.message);
         throw error;

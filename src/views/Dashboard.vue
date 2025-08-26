@@ -10,19 +10,33 @@
 
             <hr class="my-4">
 
-            <b-input-group class="mb-4">
-                <b-form-input v-model="searchTerm" placeholder="Buscar equipo por título o detalle..."
-                    debounce="500"></b-form-input>
-                <b-input-group-append>
-                    <b-button @click="searchTerm = ''" :disabled="!searchTerm">Limpiar</b-button>
-                </b-input-group-append>
-            </b-input-group>
+            <b-row>
+                <b-col md="6" class="scrolling-column">
+                    <h3 class="h5 text-left text-muted font-weight-bold my-4">Equipos Humanos</h3>
+                    <b-input-group class="mb-4">
+                        <b-form-input v-model="searchHumanosTerm" placeholder="Buscar equipos humanos..."
+                            debounce="500"></b-form-input>
+                        <b-input-group-append>
+                            <b-button @click="searchHumanosTerm = ''" :disabled="!searchHumanosTerm">Limpiar</b-button>
+                        </b-input-group-append>
+                    </b-input-group>
+                    <EquipoList :equipos="filteredHumanos" @edit-equipo="editEquipo" @remove-equipo="removeEquipo" />
+                </b-col>
 
-            <h3 class="h5 text-left text-muted font-weight-bold my-4">Equipos Humanos</h3>
-            <EquipoList :equipos="filteredHumanos" @edit-equipo="editEquipo" @remove-equipo="removeEquipo" />
-
-            <h3 class="h5 text-left text-muted font-weight-bold my-4">Equipos Veterinarios</h3>
-            <EquipoList :equipos="filteredVeterinarios" @edit-equipo="editEquipo" @remove-equipo="removeEquipo" />
+                <b-col md="6" class="scrolling-column">
+                    <h3 class="h5 text-left text-muted font-weight-bold my-4">Equipos Veterinarios</h3>
+                    <b-input-group class="mb-4">
+                        <b-form-input v-model="searchVeterinariosTerm" placeholder="Buscar equipos veterinarios..."
+                            debounce="500"></b-form-input>
+                        <b-input-group-append>
+                            <b-button @click="searchVeterinariosTerm = ''"
+                                :disabled="!searchVeterinariosTerm">Limpiar</b-button>
+                        </b-input-group-append>
+                    </b-input-group>
+                    <EquipoList :equipos="filteredVeterinarios" @edit-equipo="editEquipo"
+                        @remove-equipo="removeEquipo" />
+                </b-col>
+            </b-row>
 
             <b-modal v-model="showAddModal" :title="editingEquipo ? 'Editar Equipo' : 'Agregar Nuevo Equipo'"
                 hide-footer size="lg" centered header-class="border-bottom-0 pb-0" body-class="pt-0"
@@ -45,7 +59,8 @@ export default {
         return {
             showAddModal: false,
             editingEquipo: null,
-            searchTerm: '',
+            searchHumanosTerm: '', // Nueva variable para la búsqueda de equipos humanos
+            searchVeterinariosTerm: '', // Nueva variable para la búsqueda de equipos veterinarios
             formKey: 0,
         };
     },
@@ -53,23 +68,24 @@ export default {
         equipos() {
             return this.$store.state.equipos;
         },
-        filteredEquipos() {
-            if (!this.searchTerm) return this.equipos;
-            const term = this.searchTerm.toLowerCase();
+        filteredHumanos() {
+            const term = this.searchHumanosTerm.toLowerCase();
             return this.equipos.filter(equipo =>
-                (equipo.titulo && equipo.titulo.toLowerCase().includes(term)) ||
-                (equipo.detalle && equipo.detalle.toLowerCase().includes(term))
+                equipo.tipo === 'Humano' &&
+                ((equipo.titulo && equipo.titulo.toLowerCase().includes(term)) ||
+                    (equipo.detalle && equipo.detalle.toLowerCase().includes(term)))
             );
         },
-        filteredHumanos() {
-            return this.filteredEquipos.filter(equipo => equipo.tipo === 'Humano');
-        },
         filteredVeterinarios() {
-            return this.filteredEquipos.filter(equipo => equipo.tipo === 'Veterinario');
+            const term = this.searchVeterinariosTerm.toLowerCase();
+            return this.equipos.filter(equipo =>
+                equipo.tipo === 'Veterinario' &&
+                ((equipo.titulo && equipo.titulo.toLowerCase().includes(term)) ||
+                    (equipo.detalle && equipo.detalle.toLowerCase().includes(term)))
+            );
         }
     },
     created() {
-        // Carga inicial de equipos desde la API
         this.$store.dispatch("fetchEquipos");
     },
     methods: {
@@ -114,6 +130,8 @@ export default {
                 this.showAddModal = false;
                 this.editingEquipo = null;
 
+                this.$store.dispatch("fetchEquipos");
+
                 this.$bvToast.toast(`Equipo "${savedEquipo.titulo}" guardado correctamente.`, {
                     title: 'Éxito', variant: 'success', solid: true, autoHideDelay: 3000
                 });
@@ -153,5 +171,13 @@ export default {
 
 hr {
     border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Estilo para las columnas con scroll independiente */
+.scrolling-column {
+    height: 70vh;
+    /* Altura de la columna, puedes ajustarla */
+    overflow-y: auto;
+    padding: 0 1rem;
 }
 </style>

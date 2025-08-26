@@ -52,7 +52,7 @@ export default {
 .elegant-table>>>th {
     background-color: #e9ecef;
     border-bottom: 2px solid #dee2e6;
-    padding: 1rem;
+    padding: 0.5rem;
     font-weight: 600;
     color: #495057;
     text-transform: uppercase;
