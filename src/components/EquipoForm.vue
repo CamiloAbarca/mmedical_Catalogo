@@ -80,8 +80,24 @@ export default {
             this.pdfFile = null;
         },
         async submitForm() {
+            // Validar campos de texto y select antes de continuar
             if (!this.form.tipo) {
-                alert('Por favor seleccione un tipo de equipo.');
+                alert('Por favor, seleccione un tipo de equipo.');
+                return;
+            }
+            if (!this.form.titulo) {
+                alert('Por favor, ingrese el título del equipo.');
+                return;
+            }
+            if (!this.form.detalle) {
+                alert('Por favor, ingrese el detalle del equipo.');
+                return;
+            }
+
+            // Validar que al menos uno de los archivos sea obligatorio al crear un nuevo equipo
+            const isNew = !this.form.id;
+            if (isNew && !this.imgFile && !this.pdfFile) {
+                alert('Debe adjuntar al menos una imagen o un PDF para crear un nuevo equipo.');
                 return;
             }
 
