@@ -40,10 +40,7 @@ import EquipoForm from '../components/EquipoForm.vue';
 
 export default {
     name: 'DashboardView',
-    components: {
-        EquipoList,
-        EquipoForm
-    },
+    components: { EquipoList, EquipoForm },
     data() {
         return {
             showAddModal: false,
@@ -57,9 +54,7 @@ export default {
             return this.$store.state.equipos;
         },
         filteredEquipos() {
-            if (!this.searchTerm) {
-                return this.equipos;
-            }
+            if (!this.searchTerm) return this.equipos;
             const term = this.searchTerm.toLowerCase();
             return this.equipos.filter(equipo =>
                 (equipo.titulo && equipo.titulo.toLowerCase().includes(term)) ||
@@ -73,28 +68,21 @@ export default {
             return this.filteredEquipos.filter(equipo => equipo.tipo === 'Veterinario');
         }
     },
+    created() {
+        // Carga inicial de equipos desde la API
+        this.$store.dispatch("fetchEquipos");
+    },
     methods: {
-        /**
-         * Abre el modal para agregar un nuevo equipo, reseteando el equipo en edición.
-         */
         openAddModal() {
             this.editingEquipo = null;
             this.formKey += 1;
             this.showAddModal = true;
         },
-        /**
-         * Cuando se hace clic en editar, carga el equipo en el formulario modal.
-         * @param {Object} equipo - El objeto equipo a editar.
-         */
         editEquipo(equipo) {
             this.editingEquipo = { ...equipo };
             this.formKey += 1;
             this.showAddModal = true;
         },
-        /**
-         * Maneja la eliminación de un equipo con una confirmación.
-         * @param {number} equipoId - El ID del equipo a eliminar.
-         */
         removeEquipo(equipoId) {
             this.$bvModal.msgBoxConfirm('¿Estás seguro de que quieres eliminar este equipo?', {
                 title: 'Confirmar Eliminación',
@@ -109,7 +97,7 @@ export default {
             })
                 .then(value => {
                     if (value) {
-                        this.$store.commit('removeEquipo', equipoId);
+                        this.$store.dispatch("deleteEquipo", equipoId);
                         this.$bvToast.toast('Equipo eliminado correctamente.', {
                             title: 'Éxito',
                             variant: 'success',
@@ -118,48 +106,40 @@ export default {
                         });
                     }
                 })
-                .catch(err => {
-                    console.error("Error al confirmar eliminación:", err);
-                });
+                .catch(err => console.error("Error al confirmar eliminación:", err));
         },
-        /**
-         * Se activa cuando un equipo ha sido guardado desde EquipoForm.
-         * @param {FormData} formData - Los datos del equipo y archivos a guardar.
-         */
-        handleEquipoSaved(formData) {
-            this.$store.dispatch('saveEquipo', formData);
-            this.showAddModal = false;
-            this.editingEquipo = null;
-            this.$bvToast.toast('Equipo guardado correctamente.', {
-                title: 'Éxito',
-                variant: 'success',
-                solid: true,
-                autoHideDelay: 3000
-            });
+        async handleEquipoSaved(equipoData) {
+            try {
+                const savedEquipo = await this.$store.dispatch('saveEquipo', equipoData);
+                this.showAddModal = false;
+                this.editingEquipo = null;
+
+                this.$bvToast.toast(`Equipo "${savedEquipo.titulo}" guardado correctamente.`, {
+                    title: 'Éxito', variant: 'success', solid: true, autoHideDelay: 3000
+                });
+            } catch (error) {
+                this.$bvToast.toast(`Error al guardar el equipo: ${error.message}`, {
+                    title: 'Error', variant: 'danger', solid: true, autoHideDelay: 5000
+                });
+            }
         }
     },
 };
 </script>
 
 <style scoped>
-/* Estilos específicos para este componente Dashboard */
 .b-card {
     padding: 2rem;
-    /* Espaciado interno generoso */
     border: none;
-    /* Eliminar el borde predeterminado */
 }
 
 .b-card-title h2 {
     font-size: 1.75rem;
-    /* Tamaño de título más grande */
     color: #212529;
-    /* Color más oscuro para el título */
 }
 
 .add-equipo-btn {
     background-color: #007bff;
-    /* Un azul primario elegante */
     border-color: #007bff;
     transition: all 0.3s ease;
 }
@@ -168,13 +148,10 @@ export default {
     background-color: #0056b3;
     border-color: #0056b3;
     transform: translateY(-2px);
-    /* Efecto sutil al pasar el ratón */
     box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
-    /* Sombra al pasar el ratón */
 }
 
 hr {
     border-top: 1px solid rgba(0, 0, 0, 0.05);
-    /* Línea divisoria muy sutil */
 }
 </style>

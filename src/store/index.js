@@ -1,3 +1,4 @@
+// store/index.js
 import Vue from "vue";
 import Vuex from "vuex";
 
@@ -5,150 +6,116 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    user: null,
-    isAuthenticated: false,
     equipos: [],
     status: "",
     error: null,
+    isAuthenticated: !!localStorage.getItem("token"),
   },
+
   mutations: {
-    /**
-     * Establece el estado del usuario y la autenticación.
-     * @param {object} state - El estado actual.
-     * @param {object} user - El objeto de usuario con sus datos y token.
-     */
-    setUser(state, user) {
-      state.user = user;
-      state.isAuthenticated = !!user;
-      localStorage.setItem("token", user ? user.token : "");
-    },
-    /**
-     * Limpia el estado del usuario al cerrar sesión.
-     * @param {object} state - El estado actual.
-     */
-    clearUser(state) {
-      state.user = null;
-      state.isAuthenticated = false;
-      localStorage.removeItem("token");
-    },
-    /**
-     * Establece el estado de la petición.
-     * @param {object} state - El estado actual.
-     * @param {string} status - El nuevo estado ('loading', 'success', 'error').
-     */
     setStatus(state, status) {
       state.status = status;
     },
-    /**
-     * Almacena los equipos en el estado.
-     * @param {object} state - El estado actual.
-     * @param {array} equipos - El array de equipos a almacenar.
-     */
-    setEquipos(state, equipos) {
-      state.equipos = equipos;
-    },
-    /**
-     * Agrega un nuevo equipo al estado.
-     * @param {object} state - El estado actual.
-     * @param {object} equipo - El nuevo equipo a agregar.
-     */
-    addEquipo(state, equipo) {
-      state.equipos.push(equipo);
-    },
-    /**
-     * Actualiza un equipo existente en el estado.
-     * @param {object} state - El estado actual.
-     * @param {object} updatedEquipo - El equipo actualizado.
-     */
-    updateEquipo(state, updatedEquipo) {
-      const index = state.equipos.findIndex((e) => e.id === updatedEquipo.id);
-      if (index !== -1) {
-        Vue.set(state.equipos, index, updatedEquipo);
-      }
-    },
-    /**
-     * Elimina un equipo del estado.
-     * @param {object} state - El estado actual.
-     * @param {number} equipoId - El ID del equipo a eliminar.
-     */
-    removeEquipo(state, equipoId) {
-      state.equipos = state.equipos.filter((e) => e.id !== equipoId);
-    },
-    /**
-     * Almacena un error en el estado.
-     * @param {object} state - El estado actual.
-     * @param {Error} error - El objeto de error.
-     */
     setError(state, error) {
       state.error = error;
     },
+    setEquipos(state, equipos) {
+      state.equipos = equipos;
+    },
+    addEquipo(state, equipo) {
+      state.equipos.push(equipo);
+    },
+    updateEquipo(state, updatedEquipo) {
+      const index = state.equipos.findIndex((e) => e.id === updatedEquipo.id);
+      if (index !== -1) Vue.set(state.equipos, index, updatedEquipo);
+    },
+    removeEquipo(state, id) {
+      state.equipos = state.equipos.filter((e) => e.id !== id);
+    },
+    setAuthenticated(state, value) {
+      state.isAuthenticated = value;
+    },
   },
+
   actions: {
-    /**
-     * Acción para iniciar sesión.
-     * @param {object} context - El contexto de Vuex.
-     * @param {object} credentials - Las credenciales del usuario (email, password).
-     */
-    async login({ commit }, credentials) {
-      commit("setStatus", "loading");
+    async login({ commit }, credenciales) {
       try {
         const response = await fetch(
           "https://mmedical.cl/apiCatalogo/usuarios/login",
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(credentials),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(credenciales),
           }
         );
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || "Error de autenticación");
-        }
+        if (!response.ok) throw new Error("Credenciales inválidas");
 
-        const user = await response.json();
-        commit("setUser", user);
-        commit("setStatus", "success");
-        return user;
+        const data = await response.json();
+
+        localStorage.setItem("token", data.token);
+
+        commit("setStatus", "authenticated");
+        commit("setError", null);
+        commit("setAuthenticated", true);
+
+        return true;
       } catch (error) {
-        commit("setError", error);
         commit("setStatus", "error");
-        throw error;
+        commit("setError", error.message);
+        commit("setAuthenticated", false);
+        return false;
       }
     },
-    /**
-     * Acción para cerrar sesión.
-     * @param {object} context - El contexto de Vuex.
-     */
+
     logout({ commit }) {
-      commit("clearUser");
+      localStorage.removeItem("token");
+      commit("setAuthenticated", false);
+      commit("setEquipos", []);
     },
-    /**
-     * Realiza una petición a la API para guardar un equipo (crear o actualizar).
-     * @param {object} context - El contexto de Vuex (commit, dispatch, state).
-     * @param {FormData} formData - Los datos del equipo a guardar, incluyendo archivos.
-     */
-    async saveEquipo({ commit }, formData) {
-      commit("setStatus", "loading");
-      commit("setError", null);
 
-      const isUpdate = formData.has("id");
-      const apiUrl = isUpdate
-        ? `https://mmedical.cl/apiCatalogo/equipos/${formData.get("id")}`
-        : "https://mmedical.cl/apiCatalogo/equipos";
-      const method = isUpdate ? "PUT" : "POST";
-
+    async fetchEquipos({ commit }) {
       try {
-        const response = await fetch(apiUrl, {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          "https://mmedical.cl/apiCatalogo/equipos",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error("Error al obtener los equipos");
+
+        const data = await response.json();
+        commit("setEquipos", data);
+      } catch (error) {
+        commit("setError", error.message);
+      }
+    },
+
+    async saveEquipo({ commit }, equipoData) {
+      try {
+        const token = localStorage.getItem("token");
+        let url = "https://mmedical.cl/apiCatalogo/equipos";
+        let method = "POST";
+
+        if (equipoData.id) {
+          url = `${url}/${equipoData.id}`;
+          method = "PUT";
+        }
+
+        const response = await fetch(url, {
           method,
-          body: formData,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(equipoData),
         });
 
-        if (!response.ok) {
-          throw new Error("Error al guardar el equipo en la API");
-        }
+        if (!response.ok) throw new Error("Error al guardar el equipo");
 
         const data = await response.json();
 
@@ -158,13 +125,11 @@ export default new Vuex.Store({
           commit("updateEquipo", data);
         }
 
-        commit("setStatus", "success");
+        return data; // <- importante: devolvemos el equipo guardado
       } catch (error) {
-        commit("setStatus", "error");
-        commit("setError", error);
-        console.error("Error en la API:", error);
+        commit("setError", error.message);
+        throw error;
       }
     },
   },
-  modules: {},
 });
