@@ -101,7 +101,7 @@ export default {
                 return;
             }
 
-            const baseUrl = 'http://mmedical.cl/apiCatalogo/equipos';
+            const baseUrl = 'https://mmedical.cl/apiCatalogo/equipos';
             const url = this.form.id ? `${baseUrl}/${this.form.id}` : baseUrl;
             const method = this.form.id ? 'PUT' : 'POST';
 
